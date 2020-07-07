@@ -38,7 +38,7 @@ The courses taken are listed. Clicking on a linked course will take you to the d
 **Fourth semester**
 * Master's Thesis (30 ECTS)
 
-An individual repository is created for the Master's thesis.
+An [individual repository](https://github.com/lennartsc/GANs-Keras) is created for the Master's thesis.
 
 ## Courses in detail
 
