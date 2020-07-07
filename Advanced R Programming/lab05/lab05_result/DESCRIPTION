@@ -1,0 +1,22 @@
+Package: rLab5
+Version: 0.0.1.000
+Title: Our weather function
+Description: Package to provide current and forecast weather details for a specific city.
+Authors@R: c(person("Lennart", "Schilling", email = "lensc874@student.liu.se", role = "cre"), person("Anubhav", "Dikshit", email = "anudi287@student.liu.se", role = "aut"), person("Thjis", "Quast", email = "thijsquast@gmail.com", role = "aut"))
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+ByteCompile: true
+Suggests: 
+    testthat,
+    knitr,
+    rmarkdown,
+    covr
+VignetteBuilder: knitr
+Imports: 
+    jsonlite,
+    shiny,
+    RCurl
+RoxygenNote: 6.1.0
+URL: https://github.com/lennartsc/rLab5
+BugReports: https://github.com/lennartsc/rLab5/issues

@@ -1,0 +1,219 @@
+---
+output: github_document
+---
+
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+  [![Travis build status](https://travis-ci.com/anubhav-dikshit/rLab6.svg?branch=master)](https://travis-ci.com/anubhav-dikshit/rLab6)
+
+  [![Coverage status](https://codecov.io/gh/anubhav-dikshit/rLab6/branch/master/graph/badge.svg)](https://codecov.io/github/anubhav-dikshit/rLab6?branch=master)
+
+This packages is a fast knapsack solver.
+For a detailed background of the knapsack problem see [here](https://en.wikipedia.org/wiki/Knapsack problem).
+
+Within this vignette, the example data.frame `knapsack_objects` is used to show how to work with the package.
+
+It is a manually created data.frame with 2000 rows:
+```{r, echo=FALSE, eval = TRUE}
+set.seed(42)
+n = 1000000
+knapsack_objects <-
+  data.frame(
+    w=sample(1:4000, size = n, replace = TRUE),
+    v=runif(n = n, 0, 10000)
+  )
+```
+```{r, echo=TRUE, eval = TRUE}
+head(knapsack_objects)
+```
+
+## Usage of the package
+The package includes in total three functions which all return the result for a specified knapsack problem.
+
+- `brute_force_knapsack(x, W)`
+- `knapsack_dynamic(x, W)`
+- `greedy_knapsack(x, W)`
+
+For each function, inputs `x` and `W` have to be specified. 
+
+`x` has to be a data.frame with two columns called `v` (for value) and `w` (for weight).
+`W` is the specified maximum weight of the knapsack. 
+
+All algorithms try to find - in a different way - the optimal filling of the knapsack to put in the maximum value considering the specified maximum weight `W`.
+
+### `brute_force_knapsack(x, W)`
+```{r, echo=FALSE, eval = TRUE}
+library(utils)
+brute_force_knapsack <- function(x, W){
+  original_value = x
+
+    stopifnot(is.data.frame(x),is.numeric(W))
+    stopifnot(W > 0)
+
+  # reorder the items according to their weight to get near the maximum as soon as possible
+  x <- x[rev(order(x[,1])),]
+
+  # remove combinations that are invalid from the start
+  # only consider items with a weight that is less than the capacity
+  x <- x[x[,'w']<=W,]
+  elements <- rownames(x)
+    i=2
+    optimum_value = 0
+    selected_items = c()
+    weights<-c()
+    values<-c()
+    while(i<=nrow(x))
+    {
+      w<-as.data.frame(combn(x[,1], i))
+      v<-as.data.frame(combn(x[,2], i))
+
+        sumw<-colSums(w) # most time consuming using profvis
+        sumv<-colSums(v) # most time consuming using profvis
+
+      weights<-which(sumw<=W)
+      if(length(weights) != 0){
+        values<-sumv[weights]
+        optimum_value<-max(values)
+        temp<-which((values)==optimum_value)
+        maxValWghtIdx<-weights[temp]
+        maxValWght<-w[, maxValWghtIdx]
+        j<-1
+        while (j<=i){
+          selected_items[j]<-which(x[,1]==maxValWght[j])
+          j=j+1
+        }
+      }
+      i=i+1
+
+    }
+    elem <- subset(original_value, w %in% maxValWght)
+    elem <- noquote(rownames(elem))
+
+    return(list(value=round(optimum_value), elements=elem))
+}
+```
+```{r, echo=TRUE, eval = TRUE}
+brute_force_knapsack(x = knapsack_objects[1:8,], W = 3500)
+```
+
+### `knapsack_dynamic(x, W)`
+```{r, echo=FALSE, eval = TRUE}
+knapsack_dynamic <- function(x, W){
+
+  stopifnot(is.data.frame(x),is.numeric(W))
+  stopifnot(W > 0)
+
+  # reorder the items according to their weight to get near the maximum as soon as possible
+  x <- x[rev(order(x[,1])),]
+
+  # remove combinations that are invalid from the start
+  # only consider items with a weight that is less than the capacity
+  x <- x[x[,'w']<=W,]
+  elements <- rownames(x)
+  w <-(x[,1])
+  p <-(x[,2])
+
+  n <- nrow(x)
+  # initiate arrays
+  x <- logical(n)
+  F <- matrix(0, nrow = W + 1, ncol = n)
+  G <- matrix(0, nrow = W + 1, ncol = 1)
+
+  # forwarding part
+  for (k in 1:n) {
+    F[, k] <- G
+    H <- c(numeric(w[k]), G[1:(W + 1 - w[k]), 1] + p[k])
+    G <- pmax(G, H)
+  }
+  fmax <- G[W + 1, 1]
+
+  # backtracking part
+  f <- fmax
+  j <- W + 1
+  for (k in n:1) {
+    if (F[j, k] < f) {
+      x[k] <- TRUE
+      j <- j - w[k]
+      f <- F[j, k]
+    }
+  }
+
+  inds <- which(x)
+  elem <- elements[x]
+  prof <- round(sum(p[inds]))
+  elem <- noquote(elem)
+  return(list(value = prof, elements = elem))
+}
+```
+```{r, echo=TRUE, eval = TRUE}
+knapsack_dynamic(x = knapsack_objects[1:8,], W = 3500)
+```
+
+### `greedy_knapsack(x, W)`
+```{r, echo=FALSE, eval = TRUE}
+library(Rcpp)
+greedy_knapsack <- function(x, W, fast= NULL){
+
+  stopifnot(is.data.frame(x),is.numeric(W))
+  stopifnot(W > 0)
+
+  x$v_by_w <- x$v/x$w
+
+  # reorder the items according to their max profit per weight
+  x <- x[rev(order(x[,3])),]
+
+  x$max_weight <- W
+
+  # remove combinations that are invalid from the start
+  # only consider items with a weight that is less than the capacity
+  x <- x[x[,'w']<=W,]
+  elements <- rownames(x)
+  x$running_weight <- cumsum(x$w)
+  x$retain_in_bag <- ifelse(x$running_weight <= x$max_weight, "Retain", "Drop")
+  x <- x[x$retain_in_bag == "Retain",]
+
+  elem <- noquote(rownames(x))
+
+  if(!is.null(fast)){
+    prof <- round(vectorSum(x$v))
+  }else{prof <- round(sum(x$v))}
+
+  elem <- noquote(elem)
+
+
+  return(list(value = prof, elements = elem))
+
+}
+```
+```{r, echo=TRUE, eval = TRUE}
+greedy_knapsack(x = knapsack_objects[1:8,], W = 3500)
+```
+
+## Speed of algorithms
+The speed of the algorithms is tested. By doing so, the questions in the lab6 are answered.
+
+### `brute_force_knapsack(x, W)`
+Question: How much time does it takes to run the algorithm for n = 16 objects?
+```{r, echo=TRUE, eval = TRUE}
+start_time <- Sys.time()
+brute_force_knapsack(x = knapsack_objects[1:16,], W = 3500)
+end_time <- Sys.time()
+end_time - start_time
+```
+### `knapsack_dynamic(x, W)`
+Question: How much time does it takes to run the algorithm for n = 500 objects?
+```{r, echo=TRUE, eval = TRUE}
+start_time <- Sys.time()
+knapsack_dynamic(x = knapsack_objects[1:500,], W = 3500)
+end_time <- Sys.time()
+end_time - start_time
+```
+### `greedy_knapsack(x, W)`
+Question: How much time does it takes to run the algorithm for n = 1000000 objects?
+```{r, echo=TRUE, eval = TRUE}
+start_time <- Sys.time()
+greedy_knapsack(x = knapsack_objects[1:1000000,], W = 3500)
+end_time <- Sys.time()
+end_time - start_time
+```

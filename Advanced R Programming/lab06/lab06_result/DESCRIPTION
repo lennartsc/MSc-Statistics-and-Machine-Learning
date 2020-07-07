@@ -1,0 +1,27 @@
+Package: rLab6
+Version: 0.0.0.9000
+Title: Fast Knapsack Package
+Description: This packages is a fast knapsack solver using various techniques such as brute force and Greedy Heuristics.
+Authors@R: c(person("Anubhav", "Dikshit", email = "anudi287@student.liu.se", role = "cre"), person("Lennart", "Schilling", email = "lensc874@student.liu.se", role = "aut"), person("Thjis", "Quast", email = "thijsquast@gmail.com", role = "aut"))
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+ByteCompile: true
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat,
+    covr
+VignetteBuilder: knitr
+Depends: R (>= 3.3)
+URL: https://github.com/anubhav-dikshit/rLab6
+BugReports: https://github.com/anubhav-dikshit/rLab6/issues
+RoxygenNote: 6.1.0
+Imports: 
+    gtools,
+    utils,
+    Rcpp,
+    profvis,
+    microbenchmark
+LinkingTo: 
+    Rcpp

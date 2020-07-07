@@ -1,0 +1,51 @@
+---
+title: "Our Weather Forecast"
+author: "Lennart Schilling, Thijs Quast, Anubhav Dikshit"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## API
+
+This package extracts data from the API of https://www.apixu.com. When using this package one can either create an account and request a personal key, or use the default key provided. With a shiny application the extracted data is then presented to the user in an interactive way, in which the user can specify the city of interest and number of days to be forecasted.
+
+
+## The package
+This R package consits of three R scripts: (1) get_data.R, which extracts the data from the apixu and stores it as a data.frame, (2) ui.R, which specifies the user interface of the shiny app, (3) server.R, which computes output values and connects to the server.
+
+## Use
+When typing in a cityname, do not use characters on letters. E.g., when trying to extract weather data for Linköping, type "Linkoping".
+
+## Data
+The package includes one function called get_data(city, days) which returns a list with information about the specified location, current weather and the number of days to be forecasted as specified in the function. An example of the output of this function is shown below for the city Bangalore in India.
+
+```{r echo = -1}
+library(rLab5)
+get_data("Bangalore", 1)
+```
+
+
+```{r shiny example, eval=FALSE}
+## shiny app
+library(rLab5)
+shiny::runGitHub(repo = "lennartsc/rLab5", subdir = "inst")
+```
+
+## Default
+By default the shiny app shows an example for the city of Bangalore. One can easily change the city and forecast days by typing in a different city name and checking the forecast button, subsequently, one should specify the number of days to be forecasted.
+
+## Enjoy the weather!!
+
+
+
